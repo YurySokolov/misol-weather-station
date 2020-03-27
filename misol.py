@@ -58,6 +58,8 @@ def main():
             LT = ((raw[12] << 16) + (raw[13] << 8) + (raw[14]))/10
             BT = raw[15]
             PS = ((raw[17] << 16) + (raw[18] << 8) + (raw[19]))/100
+            PS_checksum = sum(i for i in raw[17:20]) & 0xFF
+            assert PS_checksum == raw[20], "Wrong barometric checksum"
 
             payload = {
                     'wind_direction': WD,
@@ -73,8 +75,8 @@ def main():
                     'last_update': int(time.time())
                 }
 
-            for k, v in payload.items():
-                log.debug(k + ":" + str(v))
+            # for k, v in payload.items():
+            #     log.debug(k + ":" + str(v))
 
             log.debug("Got info")
 
