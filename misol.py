@@ -13,9 +13,6 @@ import time
 from paho.mqtt.client import Client, MQTT_ERR_SUCCESS
 from serial import Serial
 
-from wdata import RawWeatherData, wdata
-
-
 def publish(client: Client, topic: str, order: int):
     client.publish(f"{BASE}/{topic}/meta/type", "value", qos=0, retain=True)
     client.publish(f"{BASE}/{topic}/meta/readonly", 1, qos=0, retain=True)
