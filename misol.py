@@ -9,6 +9,7 @@
 
 import logging
 import time
+import requests
 
 from paho.mqtt.client import Client, MQTT_ERR_SUCCESS
 from serial import Serial
@@ -79,6 +80,10 @@ def main():
             #     log.debug(k + ":" + str(v))
 
             log.debug("Got info")
+            response = requests.get('http://192.168.1.36:3456/meteo/', params=payload)
+            if (response.status_code != requests.codes.ok):
+                log.debug('Send data error: %d' % response.status_code)
+
 
     except AssertionError as e:
         log.error(e)
