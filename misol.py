@@ -1,46 +1,21 @@
-# !/usr/bin/env python3
-#
-# disp.py - read from Fine Offset RS495 weather station.
-# Take RS485 via USB message from a Fine Offset WH2950 and interpret.
-# See https://wordpress.com/post/doughall.me/1683
-#
-# Copyright (C) 2018, Doug Hall
-# Licensed under MIT license, see included file LICENSE or http://opensource.org/licenses/MIT
+# 09.05.2020 v1.0 miSol meteo-station
 
 import logging
 import time
 import requests
 
-from paho.mqtt.client import Client, MQTT_ERR_SUCCESS
 from serial import Serial
 
-def publish(client: Client, topic: str, order: int):
-    client.publish(f"{BASE}/{topic}/meta/type", "value", qos=0, retain=True)
-    client.publish(f"{BASE}/{topic}/meta/readonly", 1, qos=0, retain=True)
-    client.publish(f"{BASE}/{topic}/meta/order", order, qos=0, retain=True)
-
-
 logging.basicConfig(
-    level=logging.DEBUG, filename='/misol/log.log', filemode='w',
+    level=logging.WARNING, filename='/misol/log.log', filemode='w',
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s")
 log = logging.getLogger(__name__)
-
-BASE = '/devices/misol/controls'
-TOPICS = ['temperature', 'humidity', 'light', 'wind_direction', 'wind_speed',
-          'wind_gust', 'rain', 'uvi', 'bar', 'battery_low', 'last_update']
-UVI = [432, 851, 1210, 1570, 2017, 2761, 3100, 3512, 3918, 4277, 4650, 5029,
-       5230]
-
 
 def main():
     try:
         s = Serial('COM3', 9600, timeout=60)
 
-        log.debug("Connected to serial")
-
         while True:
-            log.debug("Start Read")
-
             raw = s.read(21)
 
             checksum = sum(i for i in raw[:16]) & 0xFF
@@ -65,25 +40,24 @@ def main():
             payload = {
                     'wind_direction': WD,
                     'humidity': HM,
-                    'temperature' : TP,
-                    'wind_speed' : WS,
-                    'wind_gusts' : WG,
-                    'rain' : RN,
-                    'uvi' : UV,
-                    'light' : LT,
-                    'battery' : BT,
-                    'pressure' : PS,
+                    'temperature': TP,
+                    'wind_speed': WS,
+                    'wind_gusts': WG,
+                    'rain': RN,
+                    'uvi': UV,
+                    'light': LT,
+                    'battery': BT,
+                    'pressure': PS,
                     'last_update': int(time.time())
                 }
 
-            # for k, v in payload.items():
-            #     log.debug(k + ":" + str(v))
-
-            log.debug("Got info")
-            response = requests.get('http://192.168.1.36:3456/meteo/', params=payload)
-            if (response.status_code != requests.codes.ok):
-                log.debug('Send data error: %d' % response.status_code)
-
+            try:
+                response = requests.get('https://unqb.ru/meteo/', params=payload, verify=False)
+                response.raise_for_status()
+            except requests.HTTPError as http_err:
+                log.warning(f'HTTP error occurred: {http_err}')
+            except Exception as err:
+                log.warning(f'Other error occurred: {err}')
 
     except AssertionError as e:
         log.error(e)
