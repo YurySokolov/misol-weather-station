@@ -52,7 +52,7 @@ def main():
                 }
 
             try:
-                response = requests.get('https://unqb.ru/meteo/', params=payload, verify=False)
+                response = requests.get('http://194.61.2.147/meteo/', params=payload, verify=False)
                 response.raise_for_status()
             except requests.HTTPError as http_err:
                 log.warning(f'HTTP error occurred: {http_err}')
